@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f5f3ee;min-height:100vh;}
+
+/* ── LOGIN ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);position:relative;overflow:hidden;}
+.login-bg{position:absolute;inset:0;background-image:
+  radial-gradient(circle at 20% 50%,rgba(99,153,34,.08) 0%,transparent 50%),
+  radial-gradient(circle at 80% 20%,rgba(52,74,183,.1) 0%,transparent 40%);}
+.grid-pat{position:absolute;inset:0;opacity:.04;background-image:
+  repeating-linear-gradient(0deg,#fff 0,#fff 1px,transparent 1px,transparent 40px),
+  repeating-linear-gradient(90deg,#fff 0,#fff 1px,transparent 1px,transparent 40px);}
+.login-card{background:rgba(255,255,255,.97);border-radius:24px;padding:52px 48px;width:420px;
+  position:relative;z-index:2;box-shadow:0 32px 80px rgba(0,0,0,.4);}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.logo-icon{width:44px;height:44px;background:#1a1a2e;border-radius:12px;display:flex;
+  align-items:center;justify-content:center;font-size:22px;}
+.logo-txt{font-family:'DM Serif Display',serif;font-size:24px;color:#1a1a2e;}
+.login-title{font-size:28px;font-weight:700;color:#1a1a2e;margin-bottom:6px;letter-spacing:-.5px;}
+.login-sub{font-size:14px;color:#999;margin-bottom:40px;font-weight:300;}
+.google-btn{width:100%;padding:14px 20px;border:1.5px solid #e0e0e0;border-radius:12px;background:#fff;
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:15px;font-weight:500;
+  color:#333;cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+.google-btn:hover{background:#f8f8f8;border-color:#ccc;box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-1px);}
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:#ccc;font-size:13px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#eee;}
+.login-footer{text-align:center;font-size:12px;color:#bbb;margin-top:26px;line-height:1.6;}
+
+/* ── NAV ── */
+.navbar{background:#1a1a2e;padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  height:60px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;display:flex;align-items:center;gap:10px;}
+.nav-right{display:flex;align-items:center;gap:14px;}
+.avatar{width:34px;height:34px;border-radius:50%;background:#344AB7;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:500;color:#fff;}
+.uname{font-size:13px;color:rgba(255,255,255,.8);}
+.logout-btn{font-size:12px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;
+  padding:4px 10px;border-radius:6px;transition:all .15s;font-family:'Noto Sans KR',sans-serif;}
+.logout-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+.content{padding:32px 28px;max-width:1200px;margin:0 auto;}
+.page-title{font-size:24px;font-weight:700;color:#1a1a2e;letter-spacing:-.5px;margin-bottom:4px;}
+.page-sub{font-size:13px;color:#aaa;margin-bottom:24px;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:#ede9e0;padding:4px;border-radius:12px;width:fit-content;margin-bottom:26px;}
+.tab{padding:7px 18px;border-radius:9px;border:none;font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .2s;font-family:'Noto Sans KR',sans-serif;color:#888;background:transparent;}
+.tab.on{background:#fff;color:#1a1a2e;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border-radius:9px;border:none;font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .15s;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:#1a1a2e;color:#fff;}
+.btn-primary:hover:not(:disabled){background:#344AB7;}
+.btn-sec{background:#fff;color:#1a1a2e;border:1px solid #e0e0e0;}
+.btn-sec:hover:not(:disabled){background:#f5f3ee;}
+.btn-danger{background:#fee2e2;color:#a32d2d;}
+.btn-danger:hover:not(:disabled){background:#fecaca;}
+.btn-green{background:#e8f5e9;color:#2e7d32;}
+.btn-green:hover:not(:disabled){background:#c8e6c9;}
+.btn-purple{background:#ede7f6;color:#6a1b9a;}
+.btn-purple:hover:not(:disabled){background:#d1c4e9;}
+.btn-orange{background:#fff3e0;color:#e65100;}
+.btn-orange:hover:not(:disabled){background:#ffe0b2;}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;
+  font-size:14px;color:#888;font-family:'Noto Sans KR',sans-serif;padding:6px 10px;
+  border-radius:8px;transition:all .15s;}
+.back-btn:hover{background:#ede9e0;color:#1a1a2e;}
+
+/* ── CLASS GRID ── */
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.class-card{background:#fff;border-radius:16px;padding:22px;cursor:pointer;transition:all .2s;
+  border:1.5px solid transparent;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.class-card:hover{border-color:#344AB7;box-shadow:0 8px 24px rgba(52,74,183,.12);transform:translateY(-2px);}
+.class-emoji{font-size:30px;margin-bottom:10px;}
+.class-name{font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:3px;}
+.class-meta{font-size:12px;color:#bbb;}
+.add-card{background:transparent;border:2px dashed #d5d0c8;border-radius:16px;padding:22px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+  transition:all .2s;min-height:120px;color:#ccc;gap:6px;}
+.add-card:hover{border-color:#344AB7;color:#344AB7;background:rgba(52,74,183,.03);}
+
+/* ── SEATING ── */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.cls-title-bar{font-weight:700;font-size:17px;color:#1a1a2e;display:flex;align-items:center;gap:8px;}
+.badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;}
+.badge-blue{background:#e8f0fe;color:#344AB7;}
+.badge-red{background:#fce4ec;color:#c62828;}
+.badge-green{background:#e8f5e9;color:#2e7d32;}
+.badge-gray{background:#f5f5f5;color:#555;}
+
+.board{background:#2d5a27;border-radius:10px;padding:14px;text-align:center;
+  color:rgba(255,255,255,.85);font-size:13px;font-weight:500;margin-bottom:20px;
+  letter-spacing:2px;box-shadow:0 4px 12px rgba(45,90,39,.3);}
+
+/* seat row groups */
+.seat-area{overflow-x:auto;padding-bottom:8px;}
+.seat-grid{display:grid;gap:8px;width:fit-content;}
+
+/* Individual seat */
+.seat{
+  width:76px;height:64px;border-radius:10px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;transition:all .15s;
+  border:1.5px solid #e8e4da;box-shadow:0 2px 6px rgba(0,0,0,.04);
+  position:relative;gap:2px;background:#fff;user-select:none;
+}
+.seat:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(0,0,0,.1);}
+.seat.male{background:#e3f2fd;border-color:#1565c0;}
+.seat.female{background:#fce4ec;border-color:#c62828;}
+.seat.empty-seat{background:#ffffff;border-style:dashed;border-color:#d5d0c8;}
+.seat.fixed-seat{background:#fff8e1;border-color:#f9a825;border-width:2px;}
+.seat.shuffling{animation:shake .12s infinite;}
+.seat.triple-mode:hover{outline:3px dashed #6a1b9a;}
+.seat.triple-seat{outline:2px solid #6a1b9a;outline-offset:-2px;}
+@keyframes shake{0%{transform:translate(-1px,-1px) rotate(-.5deg);}50%{transform:translate(1px,1px) rotate(.5deg);}100%{transform:translate(-1px,1px) rotate(0deg);}}
+.snum{font-size:10px;color:#ccc;position:absolute;top:4px;right:6px;}
+.sname{font-size:11px;font-weight:600;color:#1a1a2e;text-align:center;line-height:1.3;padding:0 4px;}
+.sgender{font-size:9px;position:absolute;bottom:4px;left:6px;font-weight:500;}
+.sgender.m{color:#1565c0;}
+.sgender.f{color:#c62828;}
+.fixed-star{position:absolute;top:3px;left:5px;font-size:10px;}
+.triple-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(106,27,154,.12);border-radius:9px;font-size:22px;transition:all .15s;}
+
+/* seat pair connector */
+.seat-row{display:flex;align-items:center;gap:8px;}
+.pair-gap{width:20px;}
+
+/* ── HISTORY ── */
+.hist-panel{background:#fff;border-radius:16px;border:1px solid #ede9e0;padding:20px;margin-top:24px;}
+.hist-title{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.hist-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f3ee;border-radius:8px;}
+.hist-item:last-child{border-bottom:none;}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:#344AB7;flex-shrink:0;}
+.hist-info{flex:1;}
+.hist-label{font-size:13px;font-weight:500;color:#1a1a2e;}
+.hist-time{font-size:11px;color:#bbb;margin-top:2px;}
+.hist-restore{font-size:12px;color:#344AB7;background:#e8f0fe;border:none;padding:4px 10px;
+  border-radius:6px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;
+  justify-content:center;z-index:300;}
+.modal{background:#fff;border-radius:20px;padding:34px;width:440px;box-shadow:0 20px 60px rgba(0,0,0,.25);
+  max-height:85vh;overflow-y:auto;}
+.modal-wide{width:620px;}
+.modal h3{font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:18px;}
+.fg{margin-bottom:14px;}
+.flabel{font-size:12px;font-weight:500;color:#666;margin-bottom:5px;display:block;}
+.finput{width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:9px;font-size:14px;
+  color:#1a1a2e;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .15s;}
+.finput:focus{border-color:#344AB7;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mactions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.upload-zone{border:2px dashed #d5d0c8;border-radius:10px;padding:20px;text-align:center;
+  cursor:pointer;transition:all .2s;color:#bbb;}
+.upload-zone:hover{border-color:#344AB7;color:#344AB7;background:rgba(52,74,183,.02);}
+
+/* ── STUDENT LIST EDIT ── */
+.student-list{max-height:260px;overflow-y:auto;border:1px solid #eee;border-radius:10px;margin-bottom:12px;}
+.student-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #f5f3ee;}
+.student-row:last-child{border-bottom:none;}
+.student-num{font-size:12px;color:#ccc;width:24px;text-align:right;flex-shrink:0;}
+.student-gender-toggle{width:32px;height:24px;border-radius:6px;border:none;cursor:pointer;
+  font-size:14px;transition:all .15s;flex-shrink:0;}
+.student-gender-toggle.m{background:#e3f2fd;}
+.student-gender-toggle.f{background:#fce4ec;}
+.student-name-input{flex:1;border:none;font-size:13px;color:#1a1a2e;font-family:'Noto Sans KR',sans-serif;
+  outline:none;background:transparent;padding:2px 4px;}
+.student-name-input:focus{background:#f5f3ee;border-radius:4px;}
+.student-del{background:none;border:none;cursor:pointer;color:#ddd;font-size:16px;transition:all .15s;}
+.student-del:hover{color:#e57373;}
+.add-student-row{display:flex;gap:8px;padding:8px 12px;}
+.add-student-input{flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:7px 10px;
+  font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;}
+.add-student-input:focus{border-color:#344AB7;}
+
+/* ── FIXED SEAT CONFIG ── */
+.fixed-config-page{background:#fff;border-radius:16px;padding:28px;margin-bottom:20px;}
+.fixed-config-title{font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:6px;}
+.fixed-config-sub{font-size:13px;color:#aaa;margin-bottom:20px;}
+.fixed-grid{display:grid;gap:8px;width:fit-content;}
+.fixed-seat-btn{width:76px;height:64px;border-radius:10px;border:1.5px solid #e8e4da;background:#faf9f7;
+  cursor:pointer;transition:all .15s;font-size:11px;font-weight:600;color:#999;font-family:'Noto Sans KR',sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;gap:3px;}
+.fixed-seat-btn:hover{border-color:#f9a825;background:#fff8e1;}
+.fixed-seat-btn.has-fixed{background:#fff8e1;border-color:#f9a825;border-width:2px;color:#e65100;}
+.fixed-seat-num{font-size:10px;color:#ccc;position:absolute;top:4px;right:6px;}
+
+/* ── ASSIGN MODE SELECTION ── */
+.assign-options{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;}
+.assign-option{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:24px 16px;
+  text-align:center;cursor:pointer;transition:all .2s;}
+.assign-option:hover{border-color:#344AB7;box-shadow:0 6px 20px rgba(52,74,183,.12);}
+.assign-option.selected{border-color:#344AB7;background:#e8f0fe;}
+.assign-icon{font-size:32px;margin-bottom:10px;}
+.assign-label{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:4px;}
+.assign-desc{font-size:12px;color:#aaa;line-height:1.5;}
+
+/* ── GENDER FIRST SELECT ── */
+.gender-first-btns{display:flex;gap:12px;justify-content:center;margin:20px 0;}
+.gender-first-btn{flex:1;padding:20px;border-radius:14px;border:1.5px solid #e0e0e0;
+  background:#fff;cursor:pointer;text-align:center;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+.gender-first-btn.selected-m{border-color:#1565c0;background:#e3f2fd;}
+.gender-first-btn.selected-f{border-color:#c62828;background:#fce4ec;}
+.gender-first-btn .gf-icon{font-size:28px;margin-bottom:8px;}
+.gender-first-btn .gf-label{font-size:14px;font-weight:600;color:#1a1a2e;}
+.gender-first-btn .gf-desc{font-size:11px;color:#aaa;margin-top:3px;}
+
+/* ── VIEW SCREEN (student view) ── */
+.view-screen{min-height:100vh;background:#1a1a2e;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;padding:32px 20px;}
+.view-board{background:#2d5a27;border-radius:10px;padding:14px 60px;color:rgba(255,255,255,.85);
+  font-size:14px;font-weight:500;margin-bottom:28px;letter-spacing:3px;}
+.view-seat-grid{display:grid;gap:10px;}
+.view-seat{width:88px;height:70px;border-radius:12px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;position:relative;}
+.view-seat.m{background:#e3f2fd;border:2px solid #1565c0;}
+.view-seat.f{background:#fce4ec;border:2px solid #c62828;}
+.view-seat.empty-v{background:rgba(255,255,255,.06);border:1.5px dashed rgba(255,255,255,.15);}
+.view-seat.triple-v{background:#f3e5f5;border:2px solid #6a1b9a;}
+.view-snum{font-size:10px;color:rgba(255,255,255,.3);position:absolute;top:4px;right:6px;}
+.view-seat.m .view-snum,.view-seat.f .view-snum,.view-seat.triple-v .view-snum{color:rgba(0,0,0,.25);}
+.view-sname{font-size:12px;font-weight:700;color:#1a1a2e;text-align:center;line-height:1.3;padding:0 4px;}
+.view-seat.empty-v .view-sname{color:rgba(255,255,255,.2);}
+.view-title{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:24px;letter-spacing:.5px;}
+
+/* ── SHUFFLE ANIMATION overlay ── */
+.shuffle-overlay{position:fixed;inset:0;background:#1a1a2e;z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.shuffle-title{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;margin-bottom:32px;letter-spacing:1px;}
+.shuffle-status{font-size:14px;color:rgba(255,255,255,.5);margin-top:20px;letter-spacing:1px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;
+  padding:10px 22px;border-radius:30px;font-size:13px;font-weight:500;z-index:999;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect,useCallback}=React;
+
+/* ───────────── CONSTANTS & HELPERS ───────────── */
+const EMOJIS=['📚','✏️','🎯','🌟','📖','🖊️','🎒','🔬','🎨','📐'];
+const fmt=(d)=>{
+  const now=new Date(),diff=now-new Date(d);
+  if(diff<60000)return '방금 전';
+  if(diff<3600000)return Math.floor(diff/60000)+'분 전';
+  if(diff<86400000)return Math.floor(diff/3600000)+'시간 전';
+  return new Date(d).toLocaleDateString('ko-KR');
+};
+function mkSeats(rows,cols,students){
+  return Array.from({length:rows*cols},(_,i)=>({
+    id:i, name:students[i]?.name||null, gender:students[i]?.gender||null, fixed:false, triple:false
+  }));
+}
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+/* ───────────── GOOGLE ICON ───────────── */
+function GIcon(){return(
+  <svg width="20" height="20" viewBox="0 0 24 24">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);}
+
+/* ───────────── TOAST ───────────── */
+function Toast({msg,onDone}){
+  useEffect(()=>{const t=setTimeout(onDone,2400);return()=>clearTimeout(t);},[]);
+  return <div className="toast">{msg}</div>;
+}
+
+/* ───────────── LOGIN ───────────── */
+function LoginPage({onLogin}){return(
+  <div className="login-page">
+    <div className="login-bg"/><div className="grid-pat"/>
+    <div className="login-card">
+      <div className="logo-row"><div className="logo-icon">🏫</div><div className="logo-txt">SeatMap</div></div>
+      <div className="login-title">교실 자리 배치</div>
+      <div className="login-sub">학급 관리와 자리 배치를 더 스마트하게</div>
+      <button className="google-btn" onClick={onLogin}><GIcon/>Google 계정으로 계속하기</button>
+      <div className="divider">또는</div>
+      <button className="google-btn" style={{color:'#ccc',borderColor:'#f0f0f0',background:'#fafafa',cursor:'default'}}>학교 계정으로 로그인 (준비중)</button>
+      <div className="login-footer">로그인하면 서비스 이용약관 및 개인정보 처리방침에<br/>동의하는 것으로 간주됩니다.</div>
+    </div>
+  </div>
+);}
+
+/* ───────────── CREATE / EDIT CLASS MODAL ───────────── */
+function ClassModal({initial,onClose,onSave}){
+  const isEdit=!!initial;
+  const [name,setName]=useState(initial?.name||'');
+  // 분단 수, 분단당 줄 수, 줄당 자리 수
+  const [groups,setGroups]=useState(initial?.groups||6);     // 분단 수 (열 그룹)
+  const [rowsPerGroup,setRowsPerGroup]=useState(initial?.rowsPerGroup||4); // 분단당 줄 수 (앞→뒤)
+  const [seatsPerRow,setSeatsPerRow]=useState(initial?.seatsPerRow||1);    // 줄당 자리 수 (보통 1~2)
+  const [studentCount,setStudentCount]=useState(initial?.students?.length||0); // 학생 수 먼저 입력
+  const [students,setStudents]=useState(initial?.students||[]);
+  const [newName,setNewName]=useState('');
+  const [newGender,setNewGender]=useState('m');
+  const [inputTab,setInputTab]=useState('manual');
+  const [genderTab,setGenderTab]=useState('m'); // 남/여 분리 입력 탭
+  const [newMaleName,setNewMaleName]=useState('');
+  const [newFemaleName,setNewFemaleName]=useState('');
+  const fileRef=useRef();
+
+  // cols = groups * seatsPerRow, rows = rowsPerGroup
+  const cols=groups*seatsPerRow;
+  const rows=rowsPerGroup;
+  const totalSeats=rows*cols;
+  const fixedCount=(initial?.seats||[]).filter(s=>s.fixed).length;
+  const nonFixed=totalSeats-fixedCount;
+  // studentCount is the authoritative count; students.length tracks named entries
+  const countForCheck=students.length>0?students.length:studentCount;
+  const match=countForCheck>0&&countForCheck===nonFixed;
+  const mismatch=countForCheck>0&&countForCheck!==nonFixed;
+
+  const addStudent=()=>{
+    if(!newName.trim())return;
+    setStudents(s=>{
+      const ns=[...s,{name:newName.trim(),gender:newGender}];
+      setStudentCount(ns.length);
+      return ns;
+    });
+    setNewName('');
+  };
+  const addByGender=(gdr,nameVal,clearFn)=>{
+    if(!nameVal.trim())return;
+    setStudents(s=>{
+      const ns=[...s,{name:nameVal.trim(),gender:gdr}];
+      setStudentCount(ns.length);
+      return ns;
+    });
+    clearFn('');
+  };
+  const delStudentFn=(i)=>setStudents(s=>{
+    const ns=s.filter((_,j)=>j!==i);
+    setStudentCount(ns.length);
+    return ns;
+  });
+  const delStudent=(i)=>delStudentFn(i);
+  const toggleGender=(i)=>setStudents(s=>s.map((st,j)=>j===i?{...st,gender:st.gender==='m'?'f':'m'}:st));
+  const updateName=(i,v)=>setStudents(s=>s.map((st,j)=>j===i?{...st,name:v}:st));
+
+  const handleExcel=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'binary'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const data=XLSX.utils.sheet_to_json(ws,{header:1});
+        const ns=data.filter(r=>r[0]).map(r=>{
+          const g=String(r[1]||'').trim();
+          const gender=(g==='여'||g==='f'||g==='F')?'f':'m';
+          return {name:String(r[0]).trim(),gender};
+        });
+        setStudents(ns);
+        setStudentCount(ns.length);
+      }catch{alert('파일을 읽지 못했어요.');}
+    };
+    reader.readAsBinaryString(file);
+    e.target.value='';
+  };
+
+  const handleSave=()=>{
+    if(!name.trim()||!studentCount)return;
+    onSave({name:name.trim(),rows,cols,groups,rowsPerGroup,seatsPerRow,studentCount,students,emoji:initial?.emoji||EMOJIS[Math.floor(Math.random()*EMOJIS.length)]});
+    onClose();
+  };
+
+  return(
+    <div className="overlay" onClick={onClose}>
+      <div className="modal modal-wide" onClick={e=>e.stopPropagation()}>
+        <h3>{isEdit?'학급 편집':'새 학급 만들기'}</h3>
+
+        {/* 학급 이름 */}
+        <div className="fg">
+          <label className="flabel">학급 이름</label>
+          <input className="finput" value={name} onChange={e=>setName(e.target.value)} placeholder="예: 1학년 2반"/>
+        </div>
+
+        {/* 자리 구조 설정 */}
+        <div style={{background:'#f8f7f4',borderRadius:12,padding:'14px 16px',marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#555',marginBottom:12}}>📐 자리 구조 설정</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+            <div className="fg" style={{marginBottom:0}}>
+              <label className="flabel">분단 수</label>
+              <input className="finput" type="number" min="1" max="10" value={groups}
+                onChange={e=>setGroups(Math.max(1,+e.target.value||1))}/>
+              <div style={{fontSize:10,color:'#aaa',marginTop:3}}>가로 분단 개수</div>
+            </div>
+            <div className="fg" style={{marginBottom:0}}>
+              <label className="flabel">분단당 줄 수</label>
+              <input className="finput" type="number" min="1" max="12" value={rowsPerGroup}
+                onChange={e=>setRowsPerGroup(Math.max(1,+e.target.value||1))}/>
+              <div style={{fontSize:10,color:'#aaa',marginTop:3}}>앞→뒤 줄 수</div>
+            </div>
+            <div className="fg" style={{marginBottom:0}}>
+              <label className="flabel">줄당 자리 수</label>
+              <input className="finput" type="number" min="1" max="3" value={seatsPerRow}
+                onChange={e=>setSeatsPerRow(Math.max(1,Math.min(3,+e.target.value||1)))}/>
+              <div style={{fontSize:10,color:'#aaa',marginTop:3}}>분단 내 옆자리</div>
+            </div>
+          </div>
+          <div style={{marginTop:10,padding:'8px 12px',background:'#fff',borderRadius:8,fontSize:12,color:'#666',lineHeight:1.7}}>
+            총 <b style={{color:'#1a1a2e'}}>{totalSeats}개</b> 자리
+            &nbsp;({groups}분단 × {rowsPerGroup}줄 × {seatsPerRow}자리)
+          </div>
+        </div>
+
+        {/* 학생 수 입력 — 일치 여부는 자리 섞기 단계에서 판정 */}
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+          <label className="flabel" style={{marginBottom:0,whiteSpace:'nowrap',fontSize:13,fontWeight:600,color:'#333'}}>👨‍🎓 우리 반 학생 수</label>
+          <input className="finput" type="number" min="0" max="60"
+            value={studentCount||''}
+            onChange={e=>setStudentCount(Math.max(0,+e.target.value||0))}
+            placeholder="예: 25"
+            style={{width:90,textAlign:'center',fontSize:16,fontWeight:700}}
+          />
+          <span style={{fontSize:13,color:'#aaa'}}>명</span>
+          {studentCount>0&&totalSeats>0&&(
+            <span style={{fontSize:12,color:'#aaa',marginLeft:4}}>
+              (자리 {totalSeats}개 {studentCount===totalSeats?'✓':studentCount>totalSeats?`→ ${studentCount-totalSeats}개 부족`:`→ ${totalSeats-studentCount}개 남음`})
+            </span>
+          )}
+        </div>
+        <div style={{fontSize:11,color:'#aaa',marginBottom:14,padding:'8px 12px',background:'#f5f3ee',borderRadius:8}}>
+          💡 자리 수와 학생 수가 달라도 괜찮아요. 3인석 설정 등으로 조정한 뒤 자리 섞기 단계에서 최종 확인해요.
+        </div>
+
+        {/* 학생 명단 탭 */}
+        <div className="tabs" style={{marginBottom:14}}>
+          <button className={`tab ${inputTab==='manual'?'on':''}`} onClick={()=>setInputTab('manual')}>직접 입력</button>
+          <button className={`tab ${inputTab==='excel'?'on':''}`} onClick={()=>setInputTab('excel')}>엑셀 가져오기</button>
+        </div>
+
+        {inputTab==='manual'&&(
+          <>
+            {/* 남/여 분리 입력 탭 */}
+            <div style={{display:'flex',gap:0,marginBottom:12,borderRadius:10,overflow:'hidden',border:'1.5px solid #e0e0e0'}}>
+              <button
+                onClick={()=>setGenderTab('m')}
+                style={{flex:1,padding:'9px 0',border:'none',cursor:'pointer',fontFamily:'Noto Sans KR,sans-serif',
+                  fontWeight:600,fontSize:13,transition:'all .15s',
+                  background:genderTab==='m'?'#e3f2fd':'#fff',
+                  color:genderTab==='m'?'#1565c0':'#aaa',
+                  borderRight:'1px solid #e0e0e0'}}>
+                👦 남학생 ({students.filter(s=>s.gender==='m').length}명)
+              </button>
+              <button
+                onClick={()=>setGenderTab('f')}
+                style={{flex:1,padding:'9px 0',border:'none',cursor:'pointer',fontFamily:'Noto Sans KR,sans-serif',
+                  fontWeight:600,fontSize:13,transition:'all .15s',
+                  background:genderTab==='f'?'#fce4ec':'#fff',
+                  color:genderTab==='f'?'#c62828':'#aaa'}}>
+                👧 여학생 ({students.filter(s=>s.gender==='f').length}명)
+              </button>
+            </div>
+
+            {/* 해당 성별 학생 목록 */}
+            <div className="student-list">
+              {students.map((st,i)=>st.gender===genderTab?(
+                <div key={i} className="student-row">
+                  <span className="student-num">{i+1}</span>
+                  <span style={{fontSize:16,width:24,textAlign:'center',flexShrink:0}}>{st.gender==='m'?'👦':'👧'}</span>
+                  <input className="student-name-input" value={st.name}
+                    onChange={e=>updateName(i,e.target.value)} placeholder="이름"/>
+                  <button className="student-del" onClick={()=>delStudent(i)}>×</button>
+                </div>
+              ):null)}
+            </div>
+
+            {/* 이름 추가 인풋 */}
+            <div className="add-student-row">
+              <span style={{fontSize:18,flexShrink:0,width:32,textAlign:'center'}}>{genderTab==='m'?'👦':'👧'}</span>
+              <input className="add-student-input"
+                value={genderTab==='m'?newMaleName:newFemaleName}
+                onChange={e=>genderTab==='m'?setNewMaleName(e.target.value):setNewFemaleName(e.target.value)}
+                placeholder={`${genderTab==='m'?'남':'여'}학생 이름 입력 후 Enter`}
+                style={{borderColor:genderTab==='m'?'#90caf9':'#f48fb1'}}
+                onKeyDown={e=>{
+                  if(e.key==='Enter'){
+                    if(genderTab==='m')addByGender('m',newMaleName,setNewMaleName);
+                    else addByGender('f',newFemaleName,setNewFemaleName);
+                  }
+                }}/>
+              <button
+                className="btn"
+                style={{background:genderTab==='m'?'#e3f2fd':'#fce4ec',color:genderTab==='m'?'#1565c0':'#c62828'}}
+                onClick={()=>{
+                  if(genderTab==='m')addByGender('m',newMaleName,setNewMaleName);
+                  else addByGender('f',newFemaleName,setNewFemaleName);
+                }}>추가</button>
+            </div>
+
+            {/* 전체 요약 */}
+            {students.length>0&&(
+              <div style={{fontSize:12,color:'#888',marginTop:8,textAlign:'center'}}>
+                전체 {students.length}명 (남 {students.filter(s=>s.gender==='m').length} · 여 {students.filter(s=>s.gender==='f').length})
+              </div>
+            )}
+          </>
+        )}
+        {inputTab==='excel'&&(
+          <div className="fg">
+            <div className="upload-zone" onClick={()=>fileRef.current.click()}>
+              <div style={{fontSize:28,marginBottom:6}}>📊</div>
+              <p style={{fontSize:13}}>엑셀 파일 클릭하여 선택</p>
+              <small style={{fontSize:11,color:'#ccc',marginTop:4,display:'block'}}>
+                A열: 이름, B열: 성별(남/여) · .xlsx / .xls 지원
+              </small>
+            </div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleExcel}/>
+            {students.length>0&&(
+              <div style={{marginTop:10,fontSize:12,color:'#888'}}>
+                {students.length}명 불러옴: {students.slice(0,5).map(s=>s.name).join(', ')}{students.length>5?` 외 ${students.length-5}명`:''}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mactions">
+          <button className="btn btn-sec" onClick={onClose}>취소</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={!name.trim()||!studentCount}>
+            {isEdit?'저장':'학급 만들기'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────── ASSIGN MODE SELECTION ───────────── */
+function AssignModeSelect({cls,onSelect,onCancel}){
+  const [mode,setMode]=useState(null);
+  const [genderFirst,setGenderFirst]=useState(null); // 'm' | 'f'
+
+  const canProceed=mode==='random'||(mode==='zigzag'&&genderFirst)||(mode==='manual');
+
+  const handleGo=()=>{
+    if(!canProceed)return;
+    onSelect({mode,genderFirst});
+  };
+
+  return(
+    <div className="overlay" onClick={onCancel}>
+      <div className="modal modal-wide" onClick={e=>e.stopPropagation()}>
+        <h3>자리 배치 방식 선택</h3>
+        <p style={{fontSize:13,color:'#aaa',marginBottom:20}}>학생 {cls.students.length}명 · {cls.rows*cls.cols}개 자리</p>
+
+        <div className="assign-options">
+          {[
+            {id:'random',icon:'🎲',label:'전체 랜덤',desc:'모든 학생을 무작위로 배치해요'},
+            {id:'zigzag',icon:'↔️',label:'남여 지그재그',desc:'남녀를 교대로 배치해요'},
+            {id:'manual',icon:'✏️',label:'직접 선택',desc:'한 명씩 자리를 직접 배정해요'},
+          ].map(o=>(
+            <div key={o.id} className={`assign-option ${mode===o.id?'selected':''}`} onClick={()=>setMode(o.id)}>
+              <div className="assign-icon">{o.icon}</div>
+              <div className="assign-label">{o.label}</div>
+              <div className="assign-desc">{o.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {mode==='zigzag'&&(
+          <div style={{marginTop:24}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e',marginBottom:12}}>누구를 먼저 배치할까요?</div>
+            <div className="gender-first-btns">
+              <button className={`gender-first-btn ${genderFirst==='m'?'selected-m':''}`} onClick={()=>setGenderFirst('m')}>
+                <div className="gf-icon">👦</div>
+                <div className="gf-label">남학생 먼저</div>
+                <div className="gf-desc">홀수 자리 → 남학생</div>
+              </button>
+              <button className={`gender-first-btn ${genderFirst==='f'?'selected-f':''}`} onClick={()=>setGenderFirst('f')}>
+                <div className="gf-icon">👧</div>
+                <div className="gf-label">여학생 먼저</div>
+                <div className="gf-desc">홀수 자리 → 여학생</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mactions">
+          <button className="btn btn-sec" onClick={onCancel}>취소</button>
+          <button className="btn btn-primary" onClick={handleGo} disabled={!canProceed}>배치 시작 →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────── SHUFFLE ANIMATION ───────────── */
+function ShuffleAnimation({seats,cols,onDone}){
+  const [displayed,setDisplayed]=useState(seats.map(s=>({...s})));
+  const [status,setStatus]=useState('빠르게 섞는 중...');
+  const phase=useRef(0); // 0=fast 1=med 2=slow 3=done
+  const timer=useRef(null);
+
+  useEffect(()=>{
+    let elapsed=0;
+    const intervals=[
+      {duration:7000,interval:120,label:'빠르게 섞는 중...'},
+      {duration:2000,interval:280,label:'조금씩 느려지는 중...'},
+      {duration:2000,interval:480,label:'거의 다 됐어요...'},
+    ];
+    let phaseIdx=0;
+    const names=seats.map(s=>s.name).filter(Boolean);
+
+    const runPhase=()=>{
+      if(phaseIdx>=intervals.length){setStatus('완료!');setTimeout(onDone,600);return;}
+      const {duration,interval,label}=intervals[phaseIdx];
+      setStatus(label);
+      let t=0;
+      const tick=()=>{
+        setDisplayed(prev=>{
+          const sh=[...prev];
+          for(let k=0;k<3;k++){
+            const a=Math.floor(Math.random()*sh.length);
+            const b=Math.floor(Math.random()*sh.length);
+            if(sh[a].name&&sh[b].name&&!sh[a].fixed&&!sh[b].fixed){
+              [sh[a].name,sh[b].name]=[sh[b].name,sh[a].name];
+              [sh[a].gender,sh[b].gender]=[sh[b].gender,sh[a].gender];
+            }
+          }
+          return [...sh];
+        });
+        t+=interval;
+        if(t<duration){timer.current=setTimeout(tick,interval);}
+        else{phaseIdx++;runPhase();}
+      };
+      tick();
+    };
+    runPhase();
+    return()=>clearTimeout(timer.current);
+  },[]);
+
+  return(
+    <div className="shuffle-overlay">
+      <div className="shuffle-title">🔀 자리 섞는 중...</div>
+      <div className="view-board" style={{marginBottom:24}}>칠판 / 화이트보드</div>
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+        {Array.from({length:Math.ceil(displayed.length/cols)},(_,rowIdx)=>{
+          const rowSeats=displayed.slice(rowIdx*cols,(rowIdx+1)*cols);
+          const cells=[];let ci=0;
+          while(ci<rowSeats.length){
+            const s=rowSeats[ci];const nextS=rowSeats[ci+1];
+            if(nextS&&nextS.triple){
+              cells.push(
+                <div key={`sa-${s.id}`} style={{display:'flex',gap:0}}>
+                  <div className={`view-seat ${s.name?(s.gender==='f'?'f':'m'):'empty-v'} ${!s.fixed?'shuffling':''}`}
+                    style={{borderRadius:'12px 0 0 12px',borderRight:'none',width:88,flexShrink:0,transition:'none'}}>
+                    <span className="view-sname">{s.name||''}</span>
+                  </div>
+                  <div style={{width:32,background:'#f3e5f5',borderTop:'2px solid #6a1b9a',borderBottom:'2px solid #6a1b9a',flexShrink:0}}/>
+                  <div className={`view-seat ${nextS.name?(nextS.gender==='f'?'f':'m'):'empty-v'} ${!nextS.fixed?'shuffling':''}`}
+                    style={{borderRadius:'0 12px 12px 0',borderLeft:'none',width:88,flexShrink:0,transition:'none'}}>
+                    <span className="view-sname">{nextS.name||''}</span>
+                  </div>
+                </div>
+              );ci+=2;
+            } else {
+              cells.push(
+                <div key={s.id} className={`view-seat ${s.name?(s.gender==='f'?'f':'m'):'empty-v'} ${!s.fixed?'shuffling':''}`}
+                  style={{transition:'none',flexShrink:0}}>
+                  <span className="view-snum">{s.id+1}</span>
+                  <span className="view-sname">{s.name||''}</span>
+                </div>
+              );ci+=1;
+            }
+          }
+          return <div key={rowIdx} style={{display:'flex',gap:10}}>{cells}</div>;
+        })}
+      </div>
+      <div className="shuffle-status">{status}</div>
+    </div>
+  );
+}
+
+/* ───────────── FIXED SEAT CONFIG (teacher-only page) ───────────── */
+function FixedSeatConfig({cls,seats,tripleMiddle,onBack,onSave}){
+  const [localSeats,setLocalSeats]=useState(seats.map(s=>({...s})));
+  const [selectedSeat,setSelectedSeat]=useState(null);
+  const [studentPick,setStudentPick]=useState('');
+
+  const [selectedSeatGender,setSelectedSeatGender]=useState(null);
+  const handleSeatClick=(seat)=>{
+    setSelectedSeat(seat.id);
+    setSelectedSeatGender(seat.gender||null);
+    setStudentPick(seat.fixed&&seat.name?seat.name:'');
+  };
+  const handleAssign=()=>{
+    if(!studentPick){
+      setLocalSeats(prev=>prev.map(s=>s.id===selectedSeat?{...s,fixed:false,name:null}:s));
+    } else {
+      const st=cls.students.find(s=>s.name===studentPick);
+      setLocalSeats(prev=>prev.map(s=>s.id===selectedSeat?{...s,fixed:true,name:studentPick,gender:st?.gender||'m'}:s));
+    }
+    setSelectedSeat(null);
+  };
+
+  // ── 남/여 일치 집계 ──
+  // 자리 배치 화면에서 선택된 남/여 자리 수 (seats 기준 + tripleMiddle 중간 자리)
+  const totalMaleSeats = seats.filter(s=>s.gender==='m').length
+    + Object.values(tripleMiddle).filter(m=>m.gender==='m').length;
+  const totalFemaleSeats = seats.filter(s=>s.gender==='f').length
+    + Object.values(tripleMiddle).filter(m=>m.gender==='f').length;
+  const totalEmptySeats = (seats.length + Object.keys(tripleMiddle).length)
+    - totalMaleSeats - totalFemaleSeats;
+
+  // 고정석에 배치된 남/여 수
+  const fixedMale = localSeats.filter(s=>s.fixed&&s.gender==='m').length;
+  const fixedFemale = localSeats.filter(s=>s.fixed&&s.gender==='f').length;
+
+  // 배치 가능한 남/여 자리 (고정 제외)
+  const availMale = totalMaleSeats - fixedMale;
+  const availFemale = totalFemaleSeats - fixedFemale;
+
+  // 학급 전체 남/여 학생 수
+  const clsMale = (cls.students||[]).filter(s=>s.gender==='m').length;
+  const clsFemale = (cls.students||[]).filter(s=>s.gender==='f').length;
+
+  // 섞기에 투입될 남/여 (고정석 제외)
+  const shuffleMale = clsMale - fixedMale;
+  const shuffleFemale = clsFemale - fixedFemale;
+
+  const maleMatch = availMale === shuffleMale;
+  const femaleMatch = availFemale === shuffleFemale;
+  const allMatch = maleMatch && femaleMatch;
+
+  // 자리 배치 화면과 동일한 행별 렌더링 (3인석 + 남/여 색상 연동)
+  const renderRows=()=>{
+    const rows=[];
+    for(let rowIdx=0;rowIdx<cls.rows;rowIdx++){
+      const rowSeats=localSeats.slice(rowIdx*cls.cols,(rowIdx+1)*cls.cols);
+      const cells=[];
+      let ci=0;
+      while(ci<rowSeats.length){
+        const s=rowSeats[ci];
+        const nextS=rowSeats[ci+1];
+        if(nextS&&nextS.triple){
+          const mid=tripleMiddle[nextS.id]||{gender:null};
+          const midGClass=mid.gender==='m'?'male':mid.gender==='f'?'female':'empty-seat';
+          // triple: left, middle, right — all clickable for fixed assignment
+          [[s,false],[{...mid,id:`mid-${nextS.id}`,_isMid:true},false],[nextS,false]].forEach(([seat,_],si)=>{
+            const isMid=seat._isMid;
+            const gClass=seat.gender==='m'?'male':seat.gender==='f'?'female':'empty-seat';
+            const isFixed=!isMid&&seat.fixed;
+            const br=si===0?'10px 0 0 10px':si===2?'0 10px 10px 0':'0';
+            const bl=si===0?'none':si===2?'none':'1px solid rgba(106,27,154,.25)';
+            const br2=si===2?'none':si===0?'none':'1px solid rgba(106,27,154,.25)';
+            cells.push(
+              <div key={isMid?`mid-${nextS.id}`:seat.id}
+                className={`seat ${gClass} ${isFixed?'fixed-seat':''} triple-seat`}
+                style={{borderRadius:br,borderLeft:si>0?'1px solid rgba(106,27,154,.25)':'',borderRight:si<2?'1px solid rgba(106,27,154,.25)':'',width:76,flexShrink:0,cursor:isMid?'default':'pointer'}}
+                onClick={()=>{if(!isMid)handleSeatClick(seat);}}>
+                {!isMid&&<span className="snum">{seat.id+1}</span>}
+                {isMid&&<span style={{fontSize:9,color:'#9c27b0',fontWeight:700,position:'absolute',bottom:3,left:0,right:0,textAlign:'center'}}>3인석</span>}
+                {isFixed&&<span className="fixed-star">⭐</span>}
+                {isFixed
+                  ?<span className="sname" style={{fontSize:10,fontWeight:700,color:'#e65100'}}>{seat.name}</span>
+                  :seat.gender
+                    ?<span style={{fontSize:16}}>{seat.gender==='m'?'👦':'👧'}</span>
+                    :<span style={{fontSize:14,color:'#ddd'}}>+</span>
+                }
+              </div>
+            );
+          });
+          ci+=2;
+        } else {
+          const gClass=s.gender==='m'?'male':s.gender==='f'?'female':'empty-seat';
+          cells.push(
+            <div key={s.id}
+              className={`seat ${gClass} ${s.fixed?'fixed-seat':''}`}
+              style={{flexShrink:0,cursor:'pointer'}}
+              onClick={()=>handleSeatClick(s)}>
+              <span className="snum">{s.id+1}</span>
+              {s.fixed&&<span className="fixed-star">⭐</span>}
+              {s.fixed
+                ?<span className="sname" style={{fontSize:10,fontWeight:700,color:'#e65100'}}>{s.name}</span>
+                :s.gender
+                  ?<span style={{fontSize:16}}>{s.gender==='m'?'👦':'👧'}</span>
+                  :<span style={{fontSize:14,color:'#ddd'}}>+</span>
+              }
+            </div>
+          );
+          ci+=1;
+        }
+      }
+      rows.push(
+        <div key={rowIdx} style={{display:'flex',gap:8,alignItems:'center'}}>
+          {cells}
+        </div>
+      );
+    }
+    return rows;
+  };
+
+  return(
+    <div>
+      <div className="toolbar">
+        <button className="back-btn" onClick={onBack}>← 자리 배치로 돌아가기</button>
+        <div style={{flex:1}}/>
+        <button className="btn btn-primary" onClick={()=>onSave(localSeats)}>저장하고 돌아가기</button>
+      </div>
+      <div className="fixed-config-page">
+        <div className="fixed-config-title">⭐ 고정석 설정</div>
+        <div className="fixed-config-sub">자리를 클릭하여 특정 학생의 고정석을 지정하세요. 고정석은 자리 섞기에서 제외되며, 학생 화면에서는 보이지 않아요.</div>
+        {/* 고정석 배치 현황 요약 */}
+        <div style={{display:'flex',gap:10,marginBottom:18}}>
+          <div style={{flex:1,background:'#e3f2fd',borderRadius:10,padding:'10px 14px',border:'1px solid #90caf9'}}>
+            <div style={{fontSize:11,color:'#1565c0',fontWeight:600,marginBottom:4}}>👦 남학생 자리</div>
+            <div style={{fontSize:13,color:'#1a1a2e'}}>
+              전체 <b>{totalMaleSeats}</b>개 중 고정 <b style={{color:'#e65100'}}>{fixedMale}</b>개
+              <span style={{fontSize:11,color:'#aaa',marginLeft:6}}>→ 섞기 {availMale}개</span>
+            </div>
+          </div>
+          <div style={{flex:1,background:'#fce4ec',borderRadius:10,padding:'10px 14px',border:'1px solid #f48fb1'}}>
+            <div style={{fontSize:11,color:'#c62828',fontWeight:600,marginBottom:4}}>👧 여학생 자리</div>
+            <div style={{fontSize:13,color:'#1a1a2e'}}>
+              전체 <b>{totalFemaleSeats}</b>개 중 고정 <b style={{color:'#e65100'}}>{fixedFemale}</b>개
+              <span style={{fontSize:11,color:'#aaa',marginLeft:6}}>→ 섞기 {availFemale}개</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 범례 */}
+        <div style={{display:'flex',gap:16,fontSize:11,color:'#aaa',marginBottom:16}}>
+          <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:12,height:12,background:'#e3f2fd',border:'1px solid #1565c0',borderRadius:3,display:'inline-block'}}/>남학생 자리</span>
+          <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:12,height:12,background:'#fce4ec',border:'1px solid #c62828',borderRadius:3,display:'inline-block'}}/>여학생 자리</span>
+          <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:12,height:12,background:'#fff8e1',border:'2px solid #f9a825',borderRadius:3,display:'inline-block'}}/>⭐ 고정석</span>
+          <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:12,height:12,outline:'2px solid #6a1b9a',borderRadius:3,display:'inline-block'}}/>3인석</span>
+        </div>
+        <div className="board" style={{marginBottom:20}}>칠판 / 화이트보드</div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+          {renderRows()}
+        </div>
+      </div>
+
+      {selectedSeat!==null&&(()=>{
+        // 이 자리의 gender에 맞는 학생만 필터
+        const seatG=selectedSeatGender;
+        const filteredStudents=seatG
+          ?(cls.students||[]).filter(s=>s.gender===seatG)
+          :(cls.students||[]);
+        const seatLabel=seatG==='m'?'👦 남학생':seatG==='f'?'👧 여학생':'';
+        const seatColor=seatG==='m'?'#1565c0':seatG==='f'?'#c62828':'#555';
+        const seatBg=seatG==='m'?'#e3f2fd':seatG==='f'?'#fce4ec':'#f5f3ee';
+        return(
+          <div className="overlay" onClick={()=>setSelectedSeat(null)}>
+            <div className="modal" onClick={e=>e.stopPropagation()}>
+              <h3 style={{display:'flex',alignItems:'center',gap:8}}>
+                {selectedSeat+1}번 자리 고정석 설정
+                {seatG&&<span style={{fontSize:12,fontWeight:500,padding:'2px 10px',borderRadius:20,background:seatBg,color:seatColor}}>{seatLabel} 자리</span>}
+              </h3>
+              {seatG?(
+                <div style={{fontSize:12,color:seatColor,background:seatBg,borderRadius:8,padding:'8px 12px',marginBottom:14}}>
+                  이 자리는 <b>{seatLabel}</b> 자리예요. {seatG==='m'?'남학생':'여학생'}만 배치할 수 있어요.
+                </div>
+              ):(
+                <div style={{fontSize:12,color:'#aaa',background:'#f5f3ee',borderRadius:8,padding:'8px 12px',marginBottom:14}}>
+                  성별이 지정되지 않은 자리예요. 자리 배치 화면에서 남/여를 먼저 선택해주세요.
+                </div>
+              )}
+              <div className="fg">
+                <label className="flabel">
+                  학생 선택 {seatG?`(${seatG==='m'?'남':'여'}학생만 표시)`:''} — 비워두면 고정석 해제
+                </label>
+                {filteredStudents.length>0?(
+                  <select className="finput" value={studentPick} onChange={e=>setStudentPick(e.target.value)}
+                    style={{borderColor:seatG==='m'?'#90caf9':seatG==='f'?'#f48fb1':'#e0e0e0'}}>
+                    <option value="">— 고정석 없음 —</option>
+                    {filteredStudents.map((st,i)=><option key={i} value={st.name}>{st.name}</option>)}
+                  </select>
+                ):(
+                  <div style={{fontSize:13,color:'#aaa',padding:'10px',textAlign:'center'}}>
+                    {seatG?`등록된 ${seatG==='m'?'남':'여'}학생이 없어요`:'학생 명단이 없어요'}
+                  </div>
+                )}
+              </div>
+              <div className="mactions">
+                <button className="btn btn-sec" onClick={()=>setSelectedSeat(null)}>취소</button>
+                <button className="btn btn-primary" onClick={handleAssign} disabled={!seatG&&!studentPick}>확인</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+/* ───────────── SEATING CHART (teacher view) ───────────── */
+function SeatingChart({cls,onBack,onUpdateClass}){
+  const [subPage,setSubPage]=useState('chart'); // 'chart' | 'fixed'
+  const [innerTab,setInnerTab]=useState('seating'); // 'seating' | 'settings' | 'history'
+  const [seats,setSeats]=useState(cls.seats||[]);
+  const [showAssignMode,setShowAssignMode]=useState(!cls.seats||cls.seats.every(s=>!s.name));
+  const [tripleMode,setTripleMode]=useState(false);
+  const [tripleMiddle,setTripleMiddle]=useState({}); // seatId(right) -> {gender}
+  const [toast,setToast]=useState(null);
+  const [showShuffle,setShowShuffle]=useState(false);
+  const [showView,setShowView]=useState(false);
+  const [manualAssignIdx,setManualAssignIdx]=useState(0);
+  const [assignMode,setAssignMode]=useState(null);
+
+  // gender click cycle: null -> m -> f -> empty(null with explicit) -> original
+  const cycleGender=(seatId)=>{
+    setSeats(prev=>prev.map(s=>{
+      if(s.id!==seatId||s.fixed)return s;
+      if(s.gender===null)return {...s,gender:'m'};
+      if(s.gender==='m')return {...s,gender:'f'};
+      return {...s,gender:null};
+    }));
+  };
+
+  // Left-click cycles gender: null→m→f→null
+  const handleSeatClick=(seat)=>{
+    if(tripleMode)return;
+    if(seat.fixed)return;
+    if(assignMode==='manual'){
+      if(manualAssignIdx<cls.students.length&&!seat.name){
+        const st=cls.students[manualAssignIdx];
+        setSeats(prev=>prev.map(s=>s.id===seat.id?{...s,name:st.name,gender:st.gender}:s));
+        setManualAssignIdx(i=>i+1);
+      }
+      return;
+    }
+    cycleGender(seat.id);
+  };
+
+  const pushHistory=(label,newSeats)=>{
+    const snap={id:Date.now(),label,time:new Date(),seats:JSON.parse(JSON.stringify(newSeats))};
+    const updated={...cls,seats:newSeats,history:[snap,...(cls.history||[])].slice(0,30)};
+    onUpdateClass(updated);
+    return updated;
+  };
+
+  const handleSave=()=>{
+    pushHistory('수동 저장',seats);
+    setToast('저장되었어요 💾');
+  };
+
+  const handleShuffleStart=()=>{
+    // 실제 자리 수 = 기본 자리 + 3인석 중간 자리
+    const tripleCount=Object.keys(tripleMiddle).length;
+    const effectiveSeats=seats.length+tripleCount;
+    const target=cls.studentCount||cls.students?.length||0;
+    if(target>0&&effectiveSeats!==target){
+      setToast(`⚠️ 학생 ${target}명 ≠ 자리 ${effectiveSeats}개 — 3인석을 조정해서 맞춰주세요`);
+      return;
+    }
+    setShowShuffle(true);
+  };
+
+  const handleShuffleDone=()=>{
+    // apply actual shuffle to seats
+    const fixed=seats.filter(s=>s.fixed);
+    const nonFixed=seats.filter(s=>!s.fixed);
+    const names=nonFixed.map(s=>({name:s.name,gender:s.gender})).filter(x=>x.name);
+    const shuffled=shuffle(names);
+    let ni=0;
+    const newSeats=seats.map(s=>{
+      if(s.fixed)return s;
+      if(s.name){const st=shuffled[ni++];return{...s,...st};}
+      return s;
+    });
+    setSeats(newSeats);
+    setShowShuffle(false);
+    setToast('자리가 섞였어요 🔀 저장하려면 💾 버튼을 눌러주세요');
+  };
+
+  const handleRestore=(snap)=>{
+    setSeats(snap.seats);
+    setToast('배치 복원 완료 ✓');
+  };
+
+  const handleAssignModeSelect=({mode,genderFirst})=>{
+    setAssignMode(mode);
+    setShowAssignMode(false);
+    const nonFixedSeats=seats.filter(s=>!s.fixed);
+    const students=[...cls.students];
+
+    if(mode==='random'){
+      const sh=shuffle(students);
+      let ni=0;
+      const ns=seats.map(s=>s.fixed?s:{...s,...(sh[ni]?{name:sh[ni].name,gender:sh[ni++].gender}:{name:null,gender:null})});
+      setSeats(ns);
+      pushHistory('전체 랜덤 배치',ns);
+    } else if(mode==='zigzag'){
+      const males=students.filter(s=>s.gender==='m');
+      const females=students.filter(s=>s.gender==='f');
+      const smales=shuffle(males);const sfemales=shuffle(females);
+      let mi=0,fi=0;
+      const ns=seats.map((s,idx)=>{
+        if(s.fixed)return s;
+        const pos=seats.filter((x,i)=>!x.fixed&&i<=idx).length-1;
+        if(genderFirst==='m'){
+          if(pos%2===0&&mi<smales.length)return{...s,...smales[mi++]};
+          if(pos%2===1&&fi<sfemales.length)return{...s,...sfemales[fi++]};
+        } else {
+          if(pos%2===0&&fi<sfemales.length)return{...s,...sfemales[fi++]};
+          if(pos%2===1&&mi<smales.length)return{...s,...smales[mi++]};
+        }
+        return{...s,name:null,gender:null};
+      });
+      setSeats(ns);
+      pushHistory(`남여 지그재그 (${genderFirst==='m'?'남':'여'}먼저)`,ns);
+    } else {
+      setManualAssignIdx(0);
+    }
+  };
+
+  const filled=seats.filter(s=>s.name).length;
+
+  if(subPage==='fixed') return(
+    <FixedSeatConfig cls={cls} seats={seats} tripleMiddle={tripleMiddle} onBack={()=>setSubPage('chart')}
+      onSave={(ns)=>{setSeats(ns);setSubPage('chart');setToast('고정석이 저장되었어요 ⭐');}}/>
+  );
+
+  if(showView) return(
+    <ViewScreen cls={cls} seats={seats} cols={cls.cols} onBack={()=>setShowView(false)}/>
+  );
+
+  if(showShuffle) return(
+    <ShuffleAnimation seats={seats} cols={cls.cols} onDone={handleShuffleDone}/>
+  );
+
+  return(
+    <div>
+      {toast&&<Toast msg={toast} onDone={()=>setToast(null)}/>}
+
+      {/* Top toolbar */}
+      <div className="toolbar">
+        <button className="back-btn" onClick={onBack}>← 학급 목록</button>
+        <div className="cls-title-bar">
+          {cls.emoji} {cls.name}
+          <span className={`badge ${
+            (cls.studentCount||cls.students?.length||0)===seats.length+Object.keys(tripleMiddle).length
+              ?'badge-green':'badge-blue'
+          }`}>학생 {cls.studentCount||cls.students?.length||0}명 / 자리 {seats.length+Object.keys(tripleMiddle).length}개</span>
+        </div>
+        <div style={{flex:1}}/>
+        <button className="btn btn-purple" onClick={()=>setShowView(true)}>👁 자리 보기</button>
+        <button className="btn btn-orange" onClick={handleShuffleStart}>🔀 자리 섞기</button>
+        <button className="btn btn-primary" onClick={handleSave}>💾 저장</button>
+      </div>
+
+      {/* Sub tabs */}
+      <div className="tabs">
+        <button className={`tab ${innerTab==='seating'?'on':''}`} onClick={()=>setInnerTab('seating')}>자리 배치</button>
+        <button className={`tab ${innerTab==='settings'?'on':''}`} onClick={()=>setInnerTab('settings')}>설정</button>
+        <button className={`tab ${innerTab==='history'?'on':''}`} onClick={()=>setInnerTab('history')}>히스토리</button>
+      </div>
+
+      {/* ── SEATING TAB ── */}
+      {innerTab==='seating'&&(
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+            <span style={{fontSize:12,color:'#aaa'}}>자리 클릭:</span>
+            {assignMode==='manual'&&(
+              <span style={{fontSize:12,color:'#344AB7',fontWeight:500}}>
+                직접 배치 중 — 다음 학생: {cls.students[manualAssignIdx]?.name||'완료'}
+              </span>
+            )}
+            <div style={{flex:1}}/>
+            <button className={`btn ${tripleMode?'btn-purple':'btn-sec'}`}
+              onClick={()=>setTripleMode(t=>!t)}>
+              {tripleMode?'✓ 3인석 선택 중':'👥 3인석 선택'}
+            </button>
+          </div>
+          {tripleMode&&(
+            <div style={{background:'#f3e5f5',borderRadius:10,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#6a1b9a'}}>
+              💡 짝(2인) 자리의 <b>오른쪽 자리</b>를 클릭하면 즉시 3자리로 합쳐져요. 합쳐진 자리를 다시 클릭하면 해제됩니다.
+            </div>
+          )}
+          <div className="board">칠판 / 화이트보드</div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+            {Array.from({length:cls.rows},(_,rowIdx)=>{
+              const rowSeats=seats.slice(rowIdx*cls.cols,(rowIdx+1)*cls.cols);
+              const cells=[];
+              let ci=0;
+              while(ci<rowSeats.length){
+                const s=rowSeats[ci];
+                const nextS=rowSeats[ci+1];
+                // If nextS has triple=true, this pair becomes a merged 3-wide seat (3 real clickable seats)
+                if(nextS&&nextS.triple){
+                  const mid=tripleMiddle[nextS.id]||{gender:null};
+                  const midGClass=mid.gender==='m'?'male':mid.gender==='f'?'female':'empty-seat';
+                  const cycleMid=()=>setTripleMiddle(prev=>{
+                    const cur=(prev[nextS.id]||{}).gender||null;
+                    const next=cur===null?'m':cur==='m'?'f':null;
+                    return {...prev,[nextS.id]:{gender:next}};
+                  });
+                  const clearTriple=()=>{
+                    setSeats(prev=>prev.map(x=>x.id===nextS.id?{...x,triple:false}:x));
+                    setTripleMiddle(p=>{const n={...p};delete n[nextS.id];return n;});
+                  };
+                  cells.push(
+                    <div key={`triple-${s.id}`} style={{display:'flex',gap:0}}>
+                      {/* Left seat */}
+                      <div
+                        className={`seat ${s.gender==='f'?'female':s.gender==='m'?'male':'empty-seat'} ${s.fixed?'fixed-seat':''} triple-seat`}
+                        style={{borderRadius:'10px 0 0 10px',borderRight:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0}}
+                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!s.fixed)cycleGender(s.id);}}>
+                        <span className="snum">{s.id+1}</span>
+                        {s.fixed&&<span className="fixed-star">⭐</span>}
+                        {s.gender?<span style={{fontSize:18}}>{s.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
+                      </div>
+                      {/* Middle seat — UI only, gender stored in tripleMiddle */}
+                      <div
+                        className={`seat ${midGClass} triple-seat`}
+                        style={{borderRadius:0,borderLeft:'1px solid rgba(106,27,154,.25)',borderRight:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0,cursor:'pointer'}}
+                        onClick={()=>{if(tripleMode){clearTriple();return;}cycleMid();}}>
+                        <span style={{fontSize:9,color:'#9c27b0',fontWeight:700,position:'absolute',bottom:3,left:0,right:0,textAlign:'center'}}>3인석</span>
+                        {mid.gender?<span style={{fontSize:18}}>{mid.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
+                      </div>
+                      {/* Right seat */}
+                      <div
+                        className={`seat ${nextS.gender==='f'?'female':nextS.gender==='m'?'male':'empty-seat'} ${nextS.fixed?'fixed-seat':''} triple-seat`}
+                        style={{borderRadius:'0 10px 10px 0',borderLeft:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0}}
+                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!nextS.fixed)cycleGender(nextS.id);}}>
+                        <span className="snum">{nextS.id+1}</span>
+                        {nextS.fixed&&<span className="fixed-star">⭐</span>}
+                        {nextS.gender?<span style={{fontSize:18}}>{nextS.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
+                      </div>
+                    </div>
+                  );
+                  ci+=2;
+                } else {
+                  // Normal seat — in triple mode, odd-column seats (right of a pair) show as clickable
+                  const colIdx=ci;
+                  const isRightOfPair=colIdx>0&&colIdx%2===1&&!rowSeats[colIdx-1]?.triple;
+                  const showTripleBtn=tripleMode&&isRightOfPair&&!s.fixed&&!s.triple;
+                  cells.push(
+                    <div key={s.id}
+                      className={`seat ${s.gender==='f'?'female':s.gender==='m'?'male':'empty-seat'} ${s.fixed?'fixed-seat':''} ${showTripleBtn?'triple-mode':''}`}
+                      style={{flexShrink:0}}
+                      onClick={()=>{
+                        if(tripleMode){
+                          if(showTripleBtn){setSeats(prev=>prev.map(x=>x.id===s.id?{...x,triple:true}:x));}
+                          return;
+                        }
+                        if(!s.fixed)cycleGender(s.id);
+                      }}
+                      title={showTripleBtn?'클릭 → 3인석으로 전환':(s.fixed?'고정석':'클릭: 성별 변경')}>
+                      <span className="snum">{s.id+1}</span>
+                      {s.fixed&&<span className="fixed-star">⭐</span>}
+                      {showTripleBtn&&<div className="triple-check" style={{fontSize:14,color:'#7b1fa2'}}>+3인</div>}
+                      {s.gender?<span className={`sgender ${s.gender}`} style={{fontSize:18}}>{s.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
+                    </div>
+                  );
+                  ci+=1;
+                }
+              }
+              return(
+                <div key={rowIdx} style={{display:'flex',gap:8,alignItems:'center'}}>
+                  {cells}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{fontSize:11,color:'#bbb',marginTop:12,textAlign:'center'}}>
+            💡 자리 클릭: 성별 변경 (빈자리 → 👦 남 → 👧 여 → 빈자리) &nbsp;|&nbsp; ⭐ 고정석은 섞기 제외
+          </div>
+        </div>
+      )}
+
+      {/* ── SETTINGS TAB ── */}
+      {innerTab==='settings'&&(
+        <div>
+          <div style={{background:'#fff',borderRadius:16,padding:24,marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
+            <div style={{fontWeight:600,fontSize:15,color:'#1a1a2e',marginBottom:6}}>⭐ 고정석 관리</div>
+            <div style={{fontSize:13,color:'#aaa',marginBottom:16}}>특정 학생의 고정 자리를 설정합니다. 고정석은 자리 섞기에서 제외되며 학생 화면에서는 표시되지 않습니다.</div>
+            <button className="btn btn-primary" onClick={()=>setSubPage('fixed')}>고정석 설정하러 가기 →</button>
+          </div>
+          <div style={{background:'#fff',borderRadius:16,padding:24,boxShadow:'0 2px 8px rgba(0,0,0,.04)'}}>
+            <div style={{fontWeight:600,fontSize:15,color:'#1a1a2e',marginBottom:6}}>🔄 배치 방식 다시 선택</div>
+            <div style={{fontSize:13,color:'#aaa',marginBottom:16}}>랜덤 / 지그재그 / 직접 선택 중 배치 방식을 다시 선택합니다.</div>
+            <button className="btn btn-sec" onClick={()=>setShowAssignMode(true)}>배치 방식 선택 →</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── HISTORY TAB ── */}
+      {innerTab==='history'&&(
+        <div className="hist-panel">
+          <div className="hist-title">🕘 저장 히스토리 <span style={{fontSize:12,color:'#bbb',fontWeight:400}}>{(cls.history||[]).length}개</span></div>
+          {(cls.history||[]).length===0
+            ?<div style={{color:'#ccc',textAlign:'center',padding:'30px 0',fontSize:14}}>아직 저장 내역이 없어요</div>
+            :(cls.history||[]).map(h=>(
+              <div key={h.id} className="hist-item">
+                <div className="hist-dot"/>
+                <div className="hist-info">
+                  <div className="hist-label">{h.label}</div>
+                  <div className="hist-time">{fmt(h.time)}</div>
+                </div>
+                <button className="hist-restore" onClick={()=>handleRestore(h)}>복원</button>
+              </div>
+            ))
+          }
+        </div>
+      )}
+
+      {/* Assign Mode Modal */}
+      {showAssignMode&&(
+        <AssignModeSelect cls={cls} onCancel={()=>setShowAssignMode(false)} onSelect={handleAssignModeSelect}/>
+      )}
+
+    </div>
+  );
+}
+
+/* ───────────── VIEW SCREEN (student-facing) ───────────── */
+function ViewScreen({cls,seats,cols,onBack}){
+  const rows=cls.rows;
+  return(
+    <div className="view-screen">
+      <button className="btn btn-sec" style={{alignSelf:'flex-start',marginBottom:24}} onClick={onBack}>← 교사 화면으로</button>
+      <div className="view-title">{cls.name} 자리 배치</div>
+      <div className="view-board">칠판 / 화이트보드</div>
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+        {Array.from({length:rows},(_,rowIdx)=>{
+          const rowSeats=seats.slice(rowIdx*cols,(rowIdx+1)*cols);
+          const cells=[];
+          let ci=0;
+          while(ci<rowSeats.length){
+            const s=rowSeats[ci];
+            const nextS=rowSeats[ci+1];
+            if(nextS&&nextS.triple){
+              cells.push(
+                <div key={`tv-${s.id}`} style={{display:'flex',gap:0}}>
+                  <div className={`view-seat ${s.name?(s.gender==='f'?'f':'m'):'empty-v'}`}
+                    style={{borderRadius:'12px 0 0 12px',borderRight:'none',width:88,flexShrink:0}}>
+                    <span className="view-snum">{s.id+1}</span>
+                    <span className="view-sname">{s.name||''}</span>
+                  </div>
+                  <div style={{width:36,background:'#f3e5f5',borderTop:'2px solid #6a1b9a',
+                    borderBottom:'2px solid #6a1b9a',display:'flex',alignItems:'center',
+                    justifyContent:'center',flexShrink:0}}>
+                    <span style={{fontSize:9,color:'#7b1fa2',fontWeight:700}}>3인</span>
+                  </div>
+                  <div className={`view-seat ${nextS.name?(nextS.gender==='f'?'f':'m'):'empty-v'}`}
+                    style={{borderRadius:'0 12px 12px 0',borderLeft:'none',width:88,flexShrink:0}}>
+                    <span className="view-snum">{nextS.id+1}</span>
+                    <span className="view-sname">{nextS.name||''}</span>
+                  </div>
+                </div>
+              );
+              ci+=2;
+            } else {
+              const cls2=s.name?(s.gender==='f'?'f':'m'):'empty-v';
+              cells.push(
+                <div key={s.id} className={`view-seat ${cls2}`} style={{flexShrink:0}}>
+                  <span className="view-snum">{s.id+1}</span>
+                  <span className="view-sname">{s.name||''}</span>
+                </div>
+              );
+              ci+=1;
+            }
+          }
+          return(
+            <div key={rowIdx} style={{display:'flex',gap:10,alignItems:'center'}}>
+              {cells}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────── CLASS LIST ───────────── */
+function ClassList({classes,onSelect,onCreate,onLoad}){
+  const [showCreate,setShowCreate]=useState(false);
+  const fileRef=useRef();
+
+  const handleLoad=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'binary'});
+        // Read _meta sheet
+        const metaWs=wb.Sheets['_meta'];
+        const metaData=metaWs?XLSX.utils.sheet_to_json(metaWs,{header:1}):null;
+        const meta=metaData&&metaData[1]?metaData[1]:null;
+        // Read 학생명단
+        const studWs=wb.Sheets['학생명단'];
+        const studData=studWs?XLSX.utils.sheet_to_json(studWs,{header:1}).slice(1):[];
+        const students=studData.filter(r=>r[1]).map(r=>({name:String(r[1]).trim(),gender:(String(r[2]||'')==='여'?'f':'m')}));
+        // Read 자리배치
+        const seatWs=wb.Sheets['자리배치'];
+        const seatData=seatWs?XLSX.utils.sheet_to_json(seatWs,{header:1}).slice(1):[];
+        const rows=meta?Number(meta[3]):Math.ceil(students.length/6)||4;
+        const cols=meta?Number(meta[4]):6;
+        const seats=seatData.map((r,i)=>({
+          id:i,name:r[1]||null,gender:r[2]==='남'?'m':r[2]==='여'?'f':null,
+          fixed:r[3]==='O',triple:r[4]==='O'
+        }));
+        const newClass={
+          id:meta?Number(meta[0]):Date.now(),
+          name:meta?String(meta[1]):'불러온 학급',
+          emoji:meta?String(meta[2]):'📚',
+          rows,cols,students,
+          seats:seats.length>0?seats:mkSeats(rows,cols,students),
+          history:[]
+        };
+        onLoad(newClass);
+      }catch(err){alert('파일을 읽지 못했어요. SeatMap에서 내보낸 .xlsx 파일을 선택해주세요.');}
+    };
+    reader.readAsBinaryString(file);
+    e.target.value='';
+  };
+
+  return(
+    <div>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+        <div style={{flex:1}}>
+          <div className="page-title">내 학급 목록</div>
+          <div className="page-sub">학급을 선택하면 자리 배치를 관리할 수 있어요</div>
+        </div>
+        <button className="btn btn-sec" onClick={()=>fileRef.current.click()}>📂 학급 불러오기</button>
+        <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={handleLoad}/>
+      </div>
+      <div className="class-grid">
+        {classes.map(c=>(
+          <div key={c.id} className="class-card" onClick={()=>onSelect(c)}>
+            <div className="class-emoji">{c.emoji}</div>
+            <div className="class-name">{c.name}</div>
+            <div className="class-meta">
+              {c.studentCount||(c.students||[]).length}명 · {c.groups||c.cols}분단 × {c.rowsPerGroup||c.rows}줄
+              {(c.history||[]).length>0&&<span style={{marginLeft:6,color:'#344AB7'}}>💾{c.history.length}</span>}
+            </div>
+          </div>
+        ))}
+        <div className="add-card" onClick={()=>setShowCreate(true)}>
+          <span style={{fontSize:26,lineHeight:1}}>+</span>
+          <span style={{fontSize:13,fontWeight:500}}>새 학급 추가</span>
+        </div>
+      </div>
+      {showCreate&&(
+        <ClassModal onClose={()=>setShowCreate(false)} onSave={(data)=>{
+          const id=Date.now();
+          const seats=mkSeats(data.rows,data.cols,data.students);
+          onCreate({id,name:data.name,emoji:data.emoji,rows:data.rows,cols:data.cols,groups:data.groups,rowsPerGroup:data.rowsPerGroup,seatsPerRow:data.seatsPerRow,studentCount:data.studentCount,students:data.students,seats,history:[]});
+        }}/>
+      )}
+    </div>
+  );
+}
+
+/* ───────────── MAIN APP ───────────── */
+function MainApp({user,onLogout}){
+  const [tab,setTab]=useState('classes');
+  const [classes,setClasses]=useState([
+    {id:1,name:'1학년 2반',emoji:'📚',rows:4,cols:6,groups:6,rowsPerGroup:4,seatsPerRow:1,studentCount:24,
+      students:[
+        {name:'김민준',gender:'m'},{name:'이서연',gender:'f'},{name:'박준서',gender:'m'},{name:'최지우',gender:'f'},
+        {name:'정하은',gender:'f'},{name:'강도현',gender:'m'},{name:'윤서아',gender:'f'},{name:'임현우',gender:'m'},
+        {name:'한지민',gender:'f'},{name:'오태양',gender:'m'},{name:'신예린',gender:'f'},{name:'류민호',gender:'m'},
+        {name:'장서윤',gender:'f'},{name:'안지훈',gender:'m'},{name:'송나은',gender:'f'},{name:'황준혁',gender:'m'},
+        {name:'전소희',gender:'f'},{name:'조민서',gender:'f'},{name:'백현우',gender:'m'},{name:'문지수',gender:'f'},
+        {name:'노태준',gender:'m'},{name:'심은채',gender:'f'},{name:'공민재',gender:'m'},{name:'원지은',gender:'f'},
+      ],
+      seats:null,history:[]},
+  ]);
+  const [selId,setSelId]=useState(null);
+
+  // init seats if null
+  const getClass=(id)=>{
+    const c=classes.find(x=>x.id===id);
+    if(c&&!c.seats){
+      const withSeats={...c,seats:mkSeats(c.rows,c.cols,[])};
+      setClasses(prev=>prev.map(x=>x.id===id?withSeats:x));
+      return withSeats;
+    }
+    return c;
+  };
+
+  const current=selId?getClass(selId):null;
+
+  const handleCreate=(cls)=>setClasses(c=>[...c,cls]);
+  const handleUpdate=(updated)=>{
+    setClasses(c=>c.map(x=>x.id===updated.id?updated:x));
+    setSelId(updated.id);
+  };
+  const handleLoadExcel=(data)=>{
+    setClasses(c=>[...c,data]);
+  };
+
+  // Export current class as Excel
+  const handleExport=()=>{
+    if(!current)return;
+    const wb=XLSX.utils.book_new();
+    // Sheet1: 학생 명단
+    const studentRows=[['번호','이름','성별'],...(current.students||[]).map((s,i)=>[i+1,s.name,s.gender==='m'?'남':'여'])];
+    const ws1=XLSX.utils.aoa_to_sheet(studentRows);
+    XLSX.utils.book_append_sheet(wb,ws1,'학생명단');
+    // Sheet2: 현재 자리 배치
+    const rows=current.rows, cols=current.cols;
+    const grid=[['자리번호','이름','성별','고정석','3인석']];
+    (current.seats||[]).forEach(s=>{
+      grid.push([s.id+1,s.name||'',s.gender==='m'?'남':s.gender==='f'?'여':'',s.fixed?'O':'',s.triple?'O':'']);
+    });
+    // Also render as classroom grid
+    const classGrid=[['← 칠판 방향 →']];
+    for(let r=0;r<rows;r++){
+      const row=[];
+      for(let c=0;c<cols;c++){
+        const s=(current.seats||[])[r*cols+c];
+        row.push(s?.name||'(빈자리)');
+      }
+      classGrid.push(row);
+    }
+    const ws2=XLSX.utils.aoa_to_sheet(grid);
+    const ws3=XLSX.utils.aoa_to_sheet(classGrid);
+    XLSX.utils.book_append_sheet(wb,ws2,'자리배치');
+    XLSX.utils.book_append_sheet(wb,ws3,'교실배치도');
+    // Sheet4: meta for re-import
+    const meta=[['id','name','emoji','rows','cols'],[current.id,current.name,current.emoji,current.rows,current.cols]];
+    const ws4=XLSX.utils.aoa_to_sheet(meta);
+    XLSX.utils.book_append_sheet(wb,ws4,'_meta');
+    XLSX.writeFile(wb,`${current.name}_자리배치.xlsx`);
+  };
+
+  return(
+    <div style={{minHeight:'100vh',background:'#f5f3ee'}}>
+      <nav className="navbar">
+        <div className="nav-logo"><span>🏫</span> SeatMap</div>
+        <div className="nav-right">
+          {current&&<button className="btn btn-sec" style={{fontSize:12}} onClick={handleExport}>📤 내보내기</button>}
+          <div className="avatar">{user.name[0]}</div>
+          <span className="uname">{user.name}</span>
+          <button className="logout-btn" onClick={onLogout}>로그아웃</button>
+        </div>
+      </nav>
+      <div className="content">
+        {current?(
+          <SeatingChart cls={current} onBack={()=>setSelId(null)} onUpdateClass={handleUpdate}/>
+        ):(
+          <>
+            <div className="tabs">
+              <button className={`tab ${tab==='classes'?'on':''}`} onClick={()=>setTab('classes')}>학급 관리</button>
+              <button className={`tab ${tab==='history'?'on':''}`} onClick={()=>setTab('history')}>전체 히스토리</button>
+            </div>
+          {tab==='classes'&&<ClassList classes={classes} onSelect={c=>setSelId(c.id)} onCreate={handleCreate} onLoad={handleLoadExcel}/>}
+            {tab==='history'&&(
+              <div>
+                <div className="page-title">전체 저장 히스토리</div>
+                <div className="page-sub">모든 학급의 저장 내역이에요</div>
+                {classes.flatMap(c=>(c.history||[]).map(h=>({...h,clsName:c.name,clsEmoji:c.emoji,clsId:c.id})))
+                  .sort((a,b)=>new Date(b.time)-new Date(a.time))
+                  .map(h=>(
+                    <div key={h.id} style={{background:'#fff',borderRadius:12,padding:'14px 18px',marginBottom:10,display:'flex',alignItems:'center',gap:12,boxShadow:'0 2px 6px rgba(0,0,0,.04)'}}>
+                      <div style={{fontSize:22}}>{h.clsEmoji}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{h.clsName} · {h.label}</div>
+                        <div style={{fontSize:11,color:'#bbb',marginTop:2}}>{fmt(h.time)}</div>
+                      </div>
+                    </div>
+                  ))
+                }
+                {classes.flatMap(c=>c.history||[]).length===0&&(
+                  <div style={{color:'#ccc',textAlign:'center',padding:'60px 0',fontSize:14}}>아직 저장 내역이 없어요</div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────── ROOT ───────────── */
+function App(){
+  const [user,setUser]=useState(null);
+  return user
+    ?<MainApp user={user} onLogout={()=>setUser(null)}/>
+    :<LoginPage onLogin={()=>setUser({name:'김선생님',email:'teacher@school.kr'})}/>;
+}
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
