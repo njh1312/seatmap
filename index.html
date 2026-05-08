@@ -7,6 +7,19 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDUZ3JHyFZmVYVzMpH_bl2CkuanssusOpE",
+  authDomain:"seatmap-0001.firebaseapp.com",
+  projectId:"seatmap-0001",
+  storageBucket:"seatmap-0001.firebasestorage.app",
+  messagingSenderId:"922410012444",
+  appId:"1:922410012444:web:cfa24852912c07192d74d9"
+});
+const db=firebase.firestore();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -1414,6 +1427,27 @@ function MainApp({user,onLogout}){
   const [tab,setTab]=useState('classes');
   const [classes,setClasses]=useState([]);
   const [selId,setSelId]=useState(null);
+  const [saveStatus,setSaveStatus]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const docRef=db.collection('users').doc(user.email).collection('data').doc('classes');
+
+  // 마운트 시 Firestore에서 불러오기
+  useEffect(()=>{
+    setLoading(true);
+    docRef.get().then(doc=>{
+      if(doc.exists) setClasses(doc.data().list||[]);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
+  // classes 변경 시 Firestore 자동 저장
+  useEffect(()=>{
+    if(loading) return;
+    setSaveStatus('saving');
+    docRef.set({list:classes,updatedAt:new Date().toISOString()})
+      .then(()=>{setSaveStatus('saved');setTimeout(()=>setSaveStatus(null),2000);})
+      .catch(()=>{setSaveStatus('error');setTimeout(()=>setSaveStatus(null),3000);});
+  },[classes]);
 
   // init seats if null
   const getClass=(id)=>{
@@ -1477,6 +1511,9 @@ function MainApp({user,onLogout}){
       <nav className="navbar">
         <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>{setSelId(null);setTab('classes');}}><span>🏫</span> SeatMap</div>
         <div className="nav-right">
+          {saveStatus==='saving'&&<span style={{fontSize:11,color:'rgba(255,255,255,.4)',display:'flex',alignItems:'center',gap:4}}>⏳ 저장 중...</span>}
+          {saveStatus==='saved'&&<span style={{fontSize:11,color:'rgba(100,255,150,.7)',display:'flex',alignItems:'center',gap:4}}>✓ 저장됨</span>}
+          {saveStatus==='error'&&<span style={{fontSize:11,color:'rgba(255,100,100,.8)',display:'flex',alignItems:'center',gap:4}}>⚠ 저장 실패</span>}
           {current&&<button className="btn btn-sec" style={{fontSize:12}} onClick={handleExport}>📤 내보내기</button>}
           <div className="avatar">{user.name[0]}</div>
           <span className="uname">{user.name}</span>
@@ -1484,7 +1521,12 @@ function MainApp({user,onLogout}){
         </div>
       </nav>
       <div className="content">
-        {current?(
+        {loading?(
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'80px 0',gap:16}}>
+            <div style={{fontSize:36}}>📚</div>
+            <div style={{fontSize:14,color:'#aaa'}}>학급 데이터를 불러오는 중...</div>
+          </div>
+        ):current?(
           <SeatingChart cls={current} onBack={()=>setSelId(null)} onUpdateClass={handleUpdate}/>
         ):(
           <>
@@ -1515,6 +1557,7 @@ function MainApp({user,onLogout}){
               </div>
             )}
           </>
+        )}
         )}
       </div>
     </div>
@@ -1583,18 +1626,20 @@ function LoginPopup({onClose,onLogin}){
 
 /* ───────────── ROOT ───────────── */
 function App(){
-  const [user,setUser]=useState(null);
+  const [user,setUser]=useState(()=>{
+    try{const u=localStorage.getItem('seatmap_user');return u?JSON.parse(u):null;}catch{return null;}
+  });
   const [showLoginPopup,setShowLoginPopup]=useState(false);
   return(
     <>
       {user
-        ?<MainApp user={user} onLogout={()=>setUser(null)}/>
+        ?<MainApp user={user} onLogout={()=>{setUser(null);try{localStorage.removeItem('seatmap_user');}catch{}}}/>
         :<LoginPage onLogin={()=>setShowLoginPopup(true)}/>
       }
       {showLoginPopup&&!user&&(
         <LoginPopup
           onClose={()=>setShowLoginPopup(false)}
-          onLogin={(u)=>{setUser(u);setShowLoginPopup(false);}}
+          onLogin={(u)=>{setUser(u);setShowLoginPopup(false);try{localStorage.setItem('seatmap_user',JSON.stringify(u));}catch{}}}
         />
       )}
     </>
