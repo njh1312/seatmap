@@ -296,7 +296,7 @@ function LoginPage({onLogin}){return(
       <div className="logo-row"><div className="logo-icon">🏫</div><div className="logo-txt">SeatMap</div></div>
       <div className="login-title">교실 자리 배치</div>
       <div className="login-sub">학급 관리와 자리 배치를 더 스마트하게</div>
-      <button className="google-btn" onClick={onLogin}><GIcon/>Google 계정으로 계속하기</button>
+      <button className="google-btn" onClick={onLogin} style={{cursor:'pointer'}}><GIcon/>Google 계정으로 시작하기</button>
       <div className="divider">또는</div>
       <button className="google-btn" style={{color:'#ccc',borderColor:'#f0f0f0',background:'#fafafa',cursor:'default'}}>학교 계정으로 로그인 (준비중)</button>
       <div className="login-footer">로그인하면 서비스 이용약관 및 개인정보 처리방침에<br/>동의하는 것으로 간주됩니다.</div>
@@ -915,7 +915,8 @@ function SeatingChart({cls,onBack,onUpdateClass}){
   const [seats,setSeats]=useState(cls.seats||[]);
   const [showAssignMode,setShowAssignMode]=useState(!cls.seats||cls.seats.every(s=>!s.name));
   const [tripleMode,setTripleMode]=useState(false);
-  const [tripleMiddle,setTripleMiddle]=useState({}); // seatId(right) -> {gender}
+  const [tripleMiddle,setTripleMiddle]=useState({});
+  const [paintMode,setPaintMode]=useState(null); // null | 'm' | 'f' // seatId(right) -> {gender}
   const [toast,setToast]=useState(null);
   const [showShuffle,setShowShuffle]=useState(false);
   const [showView,setShowView]=useState(false);
@@ -936,6 +937,11 @@ function SeatingChart({cls,onBack,onUpdateClass}){
   const handleSeatClick=(seat)=>{
     if(tripleMode)return;
     if(seat.fixed)return;
+    if(paintMode){
+      // 연속 입력 모드: 클릭만 해도 해당 성별로 바로 찍힘
+      setSeats(prev=>prev.map(s=>s.id===seat.id?{...s,gender:paintMode}:s));
+      return;
+    }
     if(assignMode==='manual'){
       if(manualAssignIdx<cls.students.length&&!seat.name){
         const st=cls.students[manualAssignIdx];
@@ -1082,6 +1088,29 @@ function SeatingChart({cls,onBack,onUpdateClass}){
               </span>
             )}
             <div style={{flex:1}}/>
+            {/* 연속 입력 모드 버튼 */}
+            <button
+              className="btn"
+              style={{
+                background:paintMode==='m'?'#1565c0':'#e3f2fd',
+                color:paintMode==='m'?'#fff':'#1565c0',
+                border:`1.5px solid #1565c0`,
+                fontWeight:paintMode==='m'?700:500,
+              }}
+              onClick={()=>setPaintMode(p=>p==='m'?null:'m')}>
+              {paintMode==='m'?'✓ 남학생 입력 중':'👦 남학생 연속 입력'}
+            </button>
+            <button
+              className="btn"
+              style={{
+                background:paintMode==='f'?'#c62828':'#fce4ec',
+                color:paintMode==='f'?'#fff':'#c62828',
+                border:`1.5px solid #c62828`,
+                fontWeight:paintMode==='f'?700:500,
+              }}
+              onClick={()=>setPaintMode(p=>p==='f'?null:'f')}>
+              {paintMode==='f'?'✓ 여학생 입력 중':'👧 여학생 연속 입력'}
+            </button>
             <button className={`btn ${tripleMode?'btn-purple':'btn-sec'}`}
               onClick={()=>setTripleMode(t=>!t)}>
               {tripleMode?'✓ 3인석 선택 중':'👥 3인석 선택'}
@@ -1090,6 +1119,18 @@ function SeatingChart({cls,onBack,onUpdateClass}){
           {tripleMode&&(
             <div style={{background:'#f3e5f5',borderRadius:10,padding:'10px 14px',marginBottom:12,fontSize:13,color:'#6a1b9a'}}>
               💡 짝(2인) 자리의 <b>오른쪽 자리</b>를 클릭하면 즉시 3자리로 합쳐져요. 합쳐진 자리를 다시 클릭하면 해제됩니다.
+            </div>
+          )}
+          {paintMode&&(
+            <div style={{
+              background:paintMode==='m'?'#e3f2fd':'#fce4ec',
+              border:`1px solid ${paintMode==='m'?'#90caf9':'#f48fb1'}`,
+              borderRadius:10,padding:'10px 14px',marginBottom:12,fontSize:13,
+              color:paintMode==='m'?'#1565c0':'#c62828',
+              display:'flex',alignItems:'center',gap:8
+            }}>
+              {paintMode==='m'?'👦':'👧'}
+              <span><b>{paintMode==='m'?'남학생':'여학생'} 연속 입력 모드</b> — 자리를 클릭하면 바로 {paintMode==='m'?'남':'여'}학생 자리로 찍혀요. 버튼을 다시 누르면 해제돼요.</span>
             </div>
           )}
           <div className="board">칠판 / 화이트보드</div>
@@ -1120,7 +1161,7 @@ function SeatingChart({cls,onBack,onUpdateClass}){
                       <div
                         className={`seat ${s.gender==='f'?'female':s.gender==='m'?'male':'empty-seat'} ${s.fixed?'fixed-seat':''} triple-seat`}
                         style={{borderRadius:'10px 0 0 10px',borderRight:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0}}
-                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!s.fixed)cycleGender(s.id);}}>
+                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!s.fixed){if(paintMode){setSeats(prev=>prev.map(x=>x.id===s.id?{...x,gender:paintMode}:x));}else cycleGender(s.id);}}}>
                         <span className="snum">{s.id+1}</span>
                         {s.fixed&&<span className="fixed-star">⭐</span>}
                         {s.gender?<span style={{fontSize:18}}>{s.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
@@ -1129,7 +1170,7 @@ function SeatingChart({cls,onBack,onUpdateClass}){
                       <div
                         className={`seat ${midGClass} triple-seat`}
                         style={{borderRadius:0,borderLeft:'1px solid rgba(106,27,154,.25)',borderRight:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0,cursor:'pointer'}}
-                        onClick={()=>{if(tripleMode){clearTriple();return;}cycleMid();}}>
+                        onClick={()=>{if(tripleMode){clearTriple();return;}if(paintMode){setTripleMiddle(prev=>({...prev,[nextS.id]:{gender:paintMode}}));}else cycleMid();}}>
                         <span style={{fontSize:9,color:'#9c27b0',fontWeight:700,position:'absolute',bottom:3,left:0,right:0,textAlign:'center'}}>3인석</span>
                         {mid.gender?<span style={{fontSize:18}}>{mid.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
                       </div>
@@ -1137,7 +1178,7 @@ function SeatingChart({cls,onBack,onUpdateClass}){
                       <div
                         className={`seat ${nextS.gender==='f'?'female':nextS.gender==='m'?'male':'empty-seat'} ${nextS.fixed?'fixed-seat':''} triple-seat`}
                         style={{borderRadius:'0 10px 10px 0',borderLeft:'1px solid rgba(106,27,154,.25)',width:76,flexShrink:0}}
-                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!nextS.fixed)cycleGender(nextS.id);}}>
+                        onClick={()=>{if(tripleMode){clearTriple();return;}if(!nextS.fixed){if(paintMode){setSeats(prev=>prev.map(x=>x.id===nextS.id?{...x,gender:paintMode}:x));}else cycleGender(nextS.id);}}}>
                         <span className="snum">{nextS.id+1}</span>
                         {nextS.fixed&&<span className="fixed-star">⭐</span>}
                         {nextS.gender?<span style={{fontSize:18}}>{nextS.gender==='m'?'👦':'👧'}</span>:<span style={{fontSize:16,color:'#ddd'}}>+</span>}
@@ -1371,18 +1412,7 @@ function ClassList({classes,onSelect,onCreate,onLoad}){
 /* ───────────── MAIN APP ───────────── */
 function MainApp({user,onLogout}){
   const [tab,setTab]=useState('classes');
-  const [classes,setClasses]=useState([
-    {id:1,name:'1학년 2반',emoji:'📚',rows:4,cols:6,groups:6,rowsPerGroup:4,seatsPerRow:1,studentCount:24,
-      students:[
-        {name:'김민준',gender:'m'},{name:'이서연',gender:'f'},{name:'박준서',gender:'m'},{name:'최지우',gender:'f'},
-        {name:'정하은',gender:'f'},{name:'강도현',gender:'m'},{name:'윤서아',gender:'f'},{name:'임현우',gender:'m'},
-        {name:'한지민',gender:'f'},{name:'오태양',gender:'m'},{name:'신예린',gender:'f'},{name:'류민호',gender:'m'},
-        {name:'장서윤',gender:'f'},{name:'안지훈',gender:'m'},{name:'송나은',gender:'f'},{name:'황준혁',gender:'m'},
-        {name:'전소희',gender:'f'},{name:'조민서',gender:'f'},{name:'백현우',gender:'m'},{name:'문지수',gender:'f'},
-        {name:'노태준',gender:'m'},{name:'심은채',gender:'f'},{name:'공민재',gender:'m'},{name:'원지은',gender:'f'},
-      ],
-      seats:null,history:[]},
-  ]);
+  const [classes,setClasses]=useState([]);
   const [selId,setSelId]=useState(null);
 
   // init seats if null
